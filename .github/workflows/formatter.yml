@@ -51,3 +51,4 @@ jobs:
         uses: mezgoodle/auto-formatter@v1.0.2
         env:
             GITHUB_TOKEN: ${{ secrets.TOKEN }}
+            python: true

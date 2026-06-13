@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pico 2 W Smart Irrigation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 900px; margin: auto; }
+        .header { background: #007bff; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .flex-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .zone-card { background: white; padding: 20px; border-radius: 8px; flex: 1; min-width: 280px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input[type=number] { width: 60px; padding: 5px; margin: 5px 0; }
+        .btn { display: inline-block; background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .manual-btn { background: #dc3545; margin-left: 10px; }
+        .logs-card { background: #222; color: #00ff00; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; height: 200px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Smart Irrigation Dashboard</h1>
+            <p>Current Controller Local Time: <strong>{{TIME}}</strong></p>
+        </div>
+        <div class="flex-grid">
+            <div class="zone-card">
+                <h2>{{NAME_A}}</h2>
+                <form action="/update" method="GET">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <label>Run Duration (Seconds): <input type="number" name="duration" value="{{DUR_A}}"></label><br>
+                    <label>Interval (Every X Days): <input type="number" name="interval" value="{{INT_A}}"></label><br>
+                    <h3>Schedule 1</h3>
+                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_A}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_A}}"></label><br>
+                    <label><input type="checkbox" name="s1_en" value="1" {{S1E_A}}> Enable Schedule 1</label>
+                    <h3>Schedule 2</h3>
+                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_A}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_A}}"></label><br>
+                    <label><input type="checkbox" name="s2_en" value="1" {{S2E_A}}> Enable Schedule 2</label><br><br>
+                    <button type="submit" class="btn">Save Configuration</button>
+                    <a href="/manual?zone=zone_a" class="btn manual-btn">Manual Instant Run</a>
+                </form>
+            </div>
+            <div class="zone-card">
+                <h2>{{NAME_B}}</h2>
+                <form action="/update" method="GET">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <label>Run Duration (Seconds): <input type="number" name="duration" value="{{DUR_B}}"></label><br>
+                    <label>Interval (Every X Days): <input type="number" name="interval" value="{{INT_B}}"></label><br>
+                    <h3>Schedule 1</h3>
+                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_B}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_B}}"></label><br>
+                    <label><input type="checkbox" name="s1_en" value="1" {{S1E_B}}> Enable Schedule 1</label>
+                    <h3>Schedule 2</h3>
+                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_B}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_B}}"></label><br>
+                    <label><input type="checkbox" name="s2_en" value="1" {{S2E_B}}> Enable Schedule 2</label><br><br>
+                    <button type="submit" class="btn">Save Configuration</button>
+                    <a href="/manual?zone=zone_b" class="btn manual-btn">Manual Instant Run</a>
+                </form>
+            </div>
+        </div>
+        <h2>Live System Output History</h2>
+        <div class="logs-card">{{LOGS}}</div>
+    </div>
+</body>
+</html>

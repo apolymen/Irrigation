@@ -57,11 +57,11 @@ def log(text):
         stamp = "[{:02d}:{:02d}:{:02d}] ".format(t[3], t[4], t[5])
     except:
         stamp = "[00:00:00] "
-    
+
     line = stamp + text
     print(line)
     system_logs += line + "\n"
-    
+
     # Clip memory buffer to last 25 entries
     lines = system_logs.split("\n")
     if len(lines) > 25:
@@ -81,7 +81,7 @@ async def connect_and_sync():
     wlan.active(True)
     log("Configuring Static IP profile...")
     wlan.ifconfig(STATIC_IP_SETTINGS)
-    
+
     while not wlan.isconnected():
         log("Attempting Wi-Fi Connection...")
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
@@ -89,7 +89,7 @@ async def connect_and_sync():
             if wlan.isconnected(): break
             await asyncio.sleep(1)
             wdt.feed()
-        
+
         if not wlan.isconnected():
             log("Link down. Retrying router in 30 seconds...")
             for _ in range(30):
@@ -126,14 +126,14 @@ async def execute_watering(zone_id):
             await asyncio.sleep(1)
             wdt.feed()
             rem -= 1
-        
+
         valve_pin.value(1) # Relay Off
         log("Safely Closed Valve " + str(i+1))
-        
+
         # Hydraulic line buffer pause
         await asyncio.sleep(1); wdt.feed()
         await asyncio.sleep(1); wdt.feed()
-    
+
     log("Cycle finished for " + z["name"])
 
 async def scheduler_task():
@@ -143,7 +143,7 @@ async def scheduler_task():
         wdt.feed()
         t = get_local_time()
         hr, mn, epoch_day = t[3], t[4], get_epoch_days()
-        
+
         for zone_id in ["zone_a", "zone_b"]:
             z = CONFIG[zone_id]
 
@@ -151,14 +151,14 @@ async def scheduler_task():
             days_since = epoch_day - z["last_watered_day"]
             if z["last_watered_day"] != 0 and days_since < z["day_interval"]:
                 continue
-            
+
             # Match active target parameters
             run_triggered = False
             if z["sched_1_en"] and hr == z["sched_1_hr"] and mn == z["sched_1_min"]:
                 run_triggered = True
             elif z["sched_2_en"] and hr == z["sched_2_hr"] and mn == z["sched_2_min"]:
                 run_triggered = True
-            
+
             if run_triggered:
                 z["last_watered_day"] = epoch_day
                 await execute_watering(zone_id)
@@ -177,7 +177,7 @@ async def scheduler_task():
             for _ in range(60):
                 await asyncio.sleep(1)
                 wdt.feed()
-        
+
         await asyncio.sleep(5)
 
 # --- USER-FACING FRONTEND RESPONSE MANAGER ---
@@ -190,14 +190,14 @@ def generate_html_page():
         f.close()
     except Exception as e:
         return "<html><body><h1>Internal Storage Read Error: " + str(e) + "</h1></body></html>"
-        
+
     t = get_local_time()
     time_str = "{:02d}:{:02d}".format(t[3], t[4])
-    
+
     # Global replacement array
     html = html.replace("{{TIME}}", time_str)
     html = html.replace("{{LOGS}}", system_logs)
-    
+
     for k in ["zone_a", "zone_b"]:
         sfx = "_A" if k == "zone_a" else "_B"
         z = CONFIG[k]
@@ -210,7 +210,7 @@ def generate_html_page():
         html = html.replace("{{S2M" + sfx + "}}", str(z["sched_2_min"]))
         html = html.replace("{{S1E" + sfx + "}}", "checked" if z["sched_1_en"] else "")
         html = html.replace("{{S2E" + sfx + "}}", "checked" if z["sched_2_en"] else "")
-        
+
     return html
 
 def parse_url_params(path):
@@ -233,16 +233,16 @@ async def handle_client(reader, writer):
     try:
         request_line = await reader.readline()
         request = request_line.decode("utf-8")
-        
+
         # Read past remaining HTTP header streams to clear buffer channels
         while True:
             line = await reader.readline()
             if line == b"\r\n" or line == b"": break
-        
+
         parts = request.split(" ")
         if len(parts) < 2: return
         path = parts[1]
-        
+
         # PARAMETER FORM UPDATES HANDLER
         if path.startswith("/update"):
             p = parse_url_params(path)
@@ -260,7 +260,7 @@ async def handle_client(reader, writer):
             # Redirect user cleanly back to homepage root index
             writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
             await writer.drain()
-            
+
         # INSTANT MANUAL RUN OVERRIDE HANDLER
         elif path.startswith("/manual"):
             p = parse_url_params(path)
@@ -270,14 +270,14 @@ async def handle_client(reader, writer):
                 asyncio.create_task(execute_watering(zk)) # Fire process asynchronously
             writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
             await writer.drain()
-            
+
         # DEFAULT LANDING SCREEN INDEX
         else:
             response = generate_html_page()
             writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n")
             writer.write(response.encode("utf-8"))
             await writer.drain()
-            
+
     except Exception as e:
         print("Web internal routing error:", e)
     finally:

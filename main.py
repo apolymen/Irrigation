@@ -5,7 +5,6 @@ import network
 import ntptime
 import machine
 import uasyncio as asyncio
-from machine import WDT
 import time
 
 # --- CONFIGURATION & CREDENTIALS ---
@@ -48,7 +47,7 @@ CONFIG = {
 system_logs = "--- System Boot Init ---\n"
 
 # Activate the Watchdog at 8 seconds
-wdt = WDT(timeout=8000)
+wdt = machine.WDT(timeout=8000)
 
 # --- BASE SYSTEM UTILITIES ---
 

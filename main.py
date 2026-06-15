@@ -32,12 +32,12 @@ for pin_num in ZONE_B_PINS:
 # --- LIVE PARAMETERS (MODIFIABLE VIA WEB INTERFACE) ---
 CONFIG = {
     "zone_a": {
-        "name": "Zone A (Valves 1 & 2)", "valves": valves_a, "duration_sec": 600, "day_interval": 2,
+        "name": "Zone A", "valves": valves_a, "duration_sec": 600, "day_interval": 1,
         "sched_1_hr": 6, "sched_1_min": 0, "sched_1_en": 1,
         "sched_2_hr": 18, "sched_2_min": 0, "sched_2_en": 0, "last_watered_day": 0
     },
     "zone_b": {
-        "name": "Zone B (Valves 3 & 4)", "valves": valves_b, "duration_sec": 600, "day_interval": 3,
+        "name": "Zone B", "valves": valves_b, "duration_sec": 600, "day_interval": 1,
         "sched_1_hr": 23, "sched_1_min": 0, "sched_1_en": 1,
         "sched_2_hr": 19, "sched_2_min": 30, "sched_2_en": 0, "last_watered_day": 0
     }
@@ -117,7 +117,7 @@ async def connect_and_sync():
 async def execute_watering(zone_id):
     """Asynchronously drives valves, feeding the watchdog during runtime."""
     z = CONFIG[zone_id]
-    log("Executing scheduled cycle for " + z["name"])
+    log("--- Cycle starting for " + z["name"] + " ---")
     for i, valve_pin in enumerate(z["valves"]):
         log("Opening Valve " + str(i+1) + " of " + z["name"])
         valve_pin.value(1)
@@ -136,7 +136,7 @@ async def execute_watering(zone_id):
         await asyncio.sleep(1); wdt.feed()
         await asyncio.sleep(1); wdt.feed()
 
-    log("Cycle finished for " + z["name"])
+    log("--- Cycle finished for " + z["name"] + " ---")
 
 async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
@@ -288,7 +288,7 @@ async def handle_client(reader, writer):
 
 # --- MAIN SYSTEM INITIALIZATION ROUTINE ---
 async def main():
-    log("Booting system setup architecture...")
+    log("Booting system, initial setup...")
     # 1. Block operations until network link established
     await connect_and_sync()
     # 2. Kick off parallel network listener and time scheduler tasks

@@ -13,7 +13,6 @@ import socket
 # --- CONFIGURATION & CREDENTIALS ---
 WIFI_SSID = "ATHLON"
 WIFI_PASSWORD = "Your_WiFi_Password"
-TIMEZONE_OFFSET_HOURS = 2
 
 # --- STATIC IP CONFIGURATION ---
 # Format: (Static_IP, Subnet_Mask, Gateway_IP, DNS_Server)

@@ -6,7 +6,7 @@ import ntptime
 import machine
 import uasyncio as asyncio
 import time
-import athens_time.py
+import athens_time
 
 # --- CONFIGURATION & CREDENTIALS ---
 WIFI_SSID = "ATHLON"

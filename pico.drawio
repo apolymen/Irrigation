@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="0ZsCdOIJE7wnmIqlcie7" name="Σελίδα-1">
+    <mxGraphModel dx="1414" dy="749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="RXTGaeEAsMykVlx7MPlu-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;imageWidth=24;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;strokeWidth=3.937;rotation=270;" value="" vertex="1">
+          <mxGeometry height="393.7" width="590.55" x="170" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="RXTGaeEAsMykVlx7MPlu-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;direction=south;rotation=270;" value="" vertex="1">
+          <mxGeometry height="292.9128" width="366.9284" x="280" y="302" as="geometry" />
+        </mxCell>
+        <mxCell id="RXTGaeEAsMykVlx7MPlu-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;rotation=270;" value="" vertex="1">
+          <mxGeometry height="279.527" width="70.866" x="430" y="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

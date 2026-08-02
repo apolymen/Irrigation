@@ -7,6 +7,7 @@ import machine
 import uasyncio as asyncio
 import time
 import athens_time
+import json
 
 # --- CONFIGURATION & CREDENTIALS ---
 WIFI_SSID = "ATHLON"
@@ -75,6 +76,42 @@ def get_local_time():
 
 def get_epoch_days():
     return int(athens_time.epoch_time() // 86400)
+
+def load_config():
+    try:
+        f = open("config.json", "r")
+        data = json.loads(f.read())
+        f.close()
+        for k in ["zone_a", "zone_b"]:
+            if k in data:
+                CONFIG[k].update(data[k])
+        log("Schedules loaded from flash.")
+    except:
+        log("No saved schedules found, using defaults.")
+
+def save_config():
+    try:
+        data = {}
+        for k in ["zone_a", "zone_b"]:
+            z = CONFIG[k]
+            data[k] = {
+                "duration_min": z["duration_min"],
+                "day_interval": z["day_interval"],
+                "sched_1_hr": z["sched_1_hr"],
+                "sched_1_min": z["sched_1_min"],
+                "sched_1_en": z["sched_1_en"],
+                "sched_2_hr": z["sched_2_hr"],
+                "sched_2_min": z["sched_2_min"],
+                "sched_2_en": z["sched_2_en"],
+                "last_watered_day": z["last_watered_day"]
+            }
+        f = open("config.json", "w")
+        f.write(json.dumps(data))
+        f.close()
+        log("Schedules saved to flash.")
+    except Exception as e:
+        log("Schedules save failed: " + str(e))
+
 
 # --- CORE NETWORKING & TIMER SCHEDULER ENGINE ---
 
@@ -261,6 +298,7 @@ async def handle_client(reader, writer):
                 CONFIG[zk]["sched_2_min"] = int(p.get("s2_mn", 0))
                 CONFIG[zk]["sched_2_en"] = 1 if "s2_en" in p else 0
                 log("Updated settings for " + CONFIG[zk]["name"])
+                save_config()
             # Redirect user cleanly back to homepage root index
             writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
             await writer.drain()
@@ -291,13 +329,15 @@ async def handle_client(reader, writer):
 # --- MAIN SYSTEM INITIALIZATION ROUTINE ---
 async def main():
     log("Booting system, initial setup...")
-    # 1. Block operations until network link established
+    # 1. Load any already saved schedules
+    load_config()
+    # 2. Block operations until network link established
     await connect_and_sync()
-    # 2. Kick off parallel network listener and time scheduler tasks
+    # 3. Kick off parallel network listener and time scheduler tasks
     asyncio.create_task(scheduler_task())
     log("Starting asynchronous web server on Port 80...")
     server = await asyncio.start_server(handle_client, "0.0.0.0", 80)
-    # 3. Keep main loop running forever to feed watchdog
+    # 4. Keep main loop running forever to feed watchdog
     while True:
         wdt.feed()
         await asyncio.sleep(1)

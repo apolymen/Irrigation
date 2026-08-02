@@ -45,6 +45,8 @@ CONFIG = {
     }
 }
 
+zone_busy = {"zone_a": False, "zone_b": False}
+
 # Global rolling log text container
 system_logs = "--- System Boot Init ---\n"
 
@@ -188,26 +190,33 @@ async def connect_and_sync():
 async def execute_watering(zone_id):
     """Asynchronously drives valves, feeding the watchdog during runtime."""
     z = CONFIG[zone_id]
+    zone_busy[zone_id] = True
     log("--- Cycle starting for " + z["name"] + " ---")
-    for i, valve_pin in enumerate(z["valves"]):
-        log("Opening Valve " + str(i+1) + " of " + z["name"])
-        valve_pin.value(1)
-
-        # Safe countdown step segments
-        rem = z["duration_min"] * 60
-        while rem > 0:
-            await asyncio.sleep(1)
-            wdt.feed()
-            rem -= 1
-
-        valve_pin.value(0) # Relay Off
-        log("Safely Closed Valve " + str(i+1))
-
-        # Hydraulic line buffer pause
-        await asyncio.sleep(1); wdt.feed()
-        await asyncio.sleep(1); wdt.feed()
-
-    log("--- Cycle finished for " + z["name"] + " ---")
+    try:
+        for i, valve_pin in enumerate(z["valves"]):
+            log("Opening Valve " + str(i+1) + " of " + z["name"])
+            valve_pin.value(1)
+    
+            # Safe countdown step segments
+            rem = z["duration_min"] * 60
+            while rem > 0:
+                await asyncio.sleep(1)
+                wdt.feed()
+                rem -= 1
+    
+            valve_pin.value(0) # Relay Off
+            log("Safely Closed Valve " + str(i+1))
+    
+            # Hydraulic line buffer pause
+            await asyncio.sleep(1); wdt.feed()
+            await asyncio.sleep(1); wdt.feed()
+    
+        log("--- Cycle finished for " + z["name"] + " ---")
+    finally:
+        # Runs on normal completion, on exception, AND on task cancellation
+        for valve_pin in z["valves"]:
+            valve_pin.value(0)
+        zone_busy[zone_id] = False
 
 async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
@@ -235,12 +244,15 @@ async def scheduler_task():
                 run_triggered = True
 
             if run_triggered:
-                z["last_watered_day"] = epoch_day
-                await execute_watering(zone_id)
-                # Sleep past the active trigger minute mark safely
-                for _ in range(60):
-                    await asyncio.sleep(1)
-                    wdt.feed()
+                if zone_busy.get(zone_id):
+                    log("Scheduled run skipped, " + z["name"] + " already busy.")
+                else:
+                    z["last_watered_day"] = epoch_day
+                    await execute_watering(zone_id)
+                    # Sleep past the active trigger minute mark safely
+                    for _ in range(60):
+                        await asyncio.sleep(1)
+                        wdt.feed()
 
         # Re-verify NTP drift sync daily at midnight
         if current_day != last_sync_day and hr >= 0:
@@ -344,8 +356,11 @@ async def handle_client(reader, writer):
             p = parse_url_params(path)
             zk = p.get("zone")
             if zk in CONFIG:
-                log("Manual override triggered for " + CONFIG[zk]["name"])
-                asyncio.create_task(execute_watering(zk)) # Fire process asynchronously
+                if zone_busy.get(zk):
+                    log("Manual run rejected, " + CONFIG[zk]["name"] + " is already running.")
+                else:
+                    log("Manual override triggered for " + CONFIG[zk]["name"])
+                    asyncio.create_task(execute_watering(zk))
             writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
             await writer.drain()
 

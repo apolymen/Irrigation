@@ -21,7 +21,6 @@ DST_OFFSET = 3 * 3600
 def _is_leap(year):
     return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
 
-
 def _weekday(year, month, day):
     # Sakamoto algorithm
     t = (0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4)
@@ -31,7 +30,6 @@ def _weekday(year, month, day):
             t[month-1] + day) % 7
     # Sunday=0 ... Saturday=6
 
-
 def _last_sunday(year, month):
     days = (31,
             29 if _is_leap(year) else 28,
@@ -40,7 +38,6 @@ def _last_sunday(year, month):
     last_day = days[month-1]
     w = _weekday(year, month, last_day)
     return last_day - w
-
 
 def _dst_active(utc):
     year, month, day, hour = utc[:4]
@@ -67,15 +64,15 @@ def _dst_active(utc):
         return False
     return hour < 1
 
-
 def utc_offset():
     utc = time.localtime()
     return DST_OFFSET if _dst_active(utc) else STD_OFFSET
 
-
 def localtime():
     return time.localtime(time.time() + utc_offset())
 
+def epoch_time():
+    return time.time() + utc_offset()
 
 def now_string():
     t = localtime()

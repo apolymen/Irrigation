@@ -18,8 +18,8 @@ TIMEZONE_OFFSET_HOURS = 2
 STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
 
 # --- HARDWARE CONFIGURATION ---
-ZONE_A_PINS = [18, 19]  # Map to your input pins
-ZONE_B_PINS = [20, 21]
+ZONE_A_PINS = [18, 19]  # Specific to sb-components relay board
+ZONE_B_PINS = [20, 21]  # Specific to sb-components relay board
 
 valves_a = []
 valves_b = []

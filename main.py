@@ -48,7 +48,7 @@ CONFIG = {
 system_logs = "--- System Boot Init ---\n"
 
 # Activate the Watchdog at 8 seconds
-wdt = machine.WDT(timeout=8000)
+wdt = machine.WDT(out=8000)
 
 # --- BASE SYSTEM UTILITIES ---
 
@@ -56,7 +56,7 @@ def log(text):
     """Outputs text to both the USB console and the internal web log array."""
     global system_logs
     try:
-        t = time.localtime(time.time() + (TIMEZONE_OFFSET_HOURS * 3600))
+        t = get_local_time()
         stamp = "[{:02d}:{:02d}:{:02d}] ".format(t[3], t[4], t[5])
     except:
         stamp = "[00:00:00] "
@@ -71,10 +71,10 @@ def log(text):
         system_logs = "\n".join(lines[-25:])
 
 def get_local_time():
-    return time.localtime(time.time() + (TIMEZONE_OFFSET_HOURS * 3600))
+    return athens_time.localtime()
 
 def get_epoch_days():
-    return int((time.time() + (TIMEZONE_OFFSET_HOURS * 3600)) // 86400)
+    return int(athens_time.epoch_time() // 86400)
 
 # --- CORE NETWORKING & TIMER SCHEDULER ENGINE ---
 

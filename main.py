@@ -8,6 +8,7 @@ import uasyncio as asyncio
 import time
 import athens_time
 import json
+import socket
 
 # --- CONFIGURATION & CREDENTIALS ---
 WIFI_SSID = "ATHLON"
@@ -142,15 +143,18 @@ async def connect_and_sync():
 
     log("Connected successfully! System Address: http://" + str(wlan.ifconfig()[0]))
 
-    # Force sync with internet time server
+    # Sync with Internet time server
     while True:
         try:
             wdt.feed()
+            socket.setdefaulttimeout(3.0)
             ntptime.settime()
+            socket.setdefaulttimeout(None)
             t = get_local_time()
             log("NTP Time Synchronised: {:02d}:{:02d}".format(t[3], t[4]))
             return True
         except:
+            socket.setdefaulttimeout(None)
             log("NTP handshake failed. Retrying in 10s...")
             for _ in range(10):
                 await asyncio.sleep(1)
@@ -217,11 +221,14 @@ async def scheduler_task():
         if current_day != last_sync_day and hr >= 0:
             if time.ticks_diff(now_ticks, next_retry_time) >= 0:
                 try:
+                    socket.setdefaulttimeout(3.0)
                     ntptime.settime()
+                    socket.setdefaulttimeout(None)
                     log("Daily Midnight Time Drift Sync Completed.")
                     # Success: Lock it in for the day
                     last_sync_day = get_local_time()[2]
                 except:
+                    socket.setdefaulttimeout(None)
                     log("Midnight NTP adjustment failed; skipping.")
                     # Failure: Schedule next attempt in 5 minutes (300,000 ms)
                     next_retry_time = time.ticks_add(now_ticks, 300000)

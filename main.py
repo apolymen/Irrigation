@@ -46,6 +46,7 @@ CONFIG = {
 }
 
 zone_busy = {"zone_a": False, "zone_b": False}
+zone_tasks = {"zone_a": None, "zone_b": None}
 
 # Global rolling log text container
 system_logs = "--- System Boot Init ---\n"
@@ -212,11 +213,15 @@ async def execute_watering(zone_id):
             await asyncio.sleep(1); wdt.feed()
     
         log("--- Cycle finished for " + z["name"] + " ---")
+    except:
+        log("--- Cycle manually stopped for " + z["name"] + " ---")
+        raise  # re-raise so asyncio knows the task was actually cancelled
     finally:
         # Runs on normal completion, on exception, AND on task cancellation
         for valve_pin in z["valves"]:
             valve_pin.value(0)
         zone_busy[zone_id] = False
+        zone_tasks[zone_id] = None
 
 async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
@@ -360,7 +365,21 @@ async def handle_client(reader, writer):
                     log("Manual run rejected, " + CONFIG[zk]["name"] + " is already running.")
                 else:
                     log("Manual override triggered for " + CONFIG[zk]["name"])
-                    asyncio.create_task(execute_watering(zk))
+                    zone_tasks[zk] = asyncio.create_task(execute_watering(zk))
+            writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
+            await writer.drain()
+
+        # Stop button handler
+        elif path.startswith("/stop"):
+            p = parse_url_params(path)
+            zk = p.get("zone")
+            if zk in CONFIG:
+                task = zone_tasks.get(zk)
+                if task is not None and not task.done():
+                    task.cancel()
+                    log("Stop requested for " + CONFIG[zk]["name"])
+                else:
+                    log("Stop requested for " + CONFIG[zk]["name"] + " but nothing is running.")
             writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n")
             await writer.drain()
 

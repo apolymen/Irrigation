@@ -52,7 +52,7 @@ system_logs = "--- System Boot Init ---\n"
 wdt = machine.WDT(out=10000)
 
 # Global tracking variables
-last_sync_day = -1
+last_sync_day = get_local_time()[2]
 next_retry_time = 0
 
 # --- BASE SYSTEM UTILITIES ---
@@ -220,7 +220,7 @@ async def scheduler_task():
                     ntptime.settime()
                     log("Daily Midnight Time Drift Sync Completed.")
                     # Success: Lock it in for the day
-                    last_sync_day = current_day
+                    last_sync_day = get_local_time()[2]
                 except:
                     log("Midnight NTP adjustment failed; skipping.")
                     # Failure: Schedule next attempt in 5 minutes (300,000 ms)

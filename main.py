@@ -51,6 +51,10 @@ system_logs = "--- System Boot Init ---\n"
 # Activate the Watchdog at 8 seconds
 wdt = machine.WDT(out=8000)
 
+# Global tracking variables
+last_sync_day = -1
+next_retry_time = 0
+
 # --- BASE SYSTEM UTILITIES ---
 
 def log(text):
@@ -178,11 +182,13 @@ async def execute_watering(zone_id):
 
 async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
+    global last_sync_day, next_retry_time
     log("Scheduler monitoring loop initialised.")
     while True:
         wdt.feed()
         t = get_local_time()
-        hr, mn, epoch_day = t[3], t[4], get_epoch_days()
+        current_day, hr, mn, epoch_day = t[2], t[3], t[4], get_epoch_days()
+        now_ticks = time.ticks_ms()
 
         for zone_id in ["zone_a", "zone_b"]:
             z = CONFIG[zone_id]
@@ -208,17 +214,19 @@ async def scheduler_task():
                     wdt.feed()
 
         # Re-verify NTP drift sync daily at midnight
-        if hr == 0 and mn == 0:
-            try:
-                ntptime.settime()
-                log("Daily Midnight Time Drift Sync Completed.")
-            except:
-                log("Midnight NTP adjustment failed; skipping.")
-            for _ in range(60):
-                await asyncio.sleep(1)
-                wdt.feed()
+        if current_day != last_sync_day and hr >= 0:
+            if time.ticks_diff(now_ticks, next_retry_time) >= 0:
+                try:
+                    ntptime.settime()
+                    log("Daily Midnight Time Drift Sync Completed.")
+                    # Success: Lock it in for the day
+                    last_sync_day = current_day
+                except:
+                    log("Midnight NTP adjustment failed; skipping.")
+                    # Failure: Schedule next attempt in 5 minutes (300,000 ms)
+                    next_retry_time = time.ticks_add(now_ticks, 300000)
 
-        # Interval between current time checks
+        # Non-blocking interval between current time checks
         await asyncio.sleep(5)
 
 # --- USER-FACING FRONTEND RESPONSE MANAGER ---

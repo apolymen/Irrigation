@@ -181,6 +181,7 @@ async def scheduler_task():
                 await asyncio.sleep(1)
                 wdt.feed()
 
+        # Interval between current time checks
         await asyncio.sleep(5)
 
 # --- USER-FACING FRONTEND RESPONSE MANAGER ---

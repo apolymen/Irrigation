@@ -48,8 +48,8 @@ CONFIG = {
 # Global rolling log text container
 system_logs = "--- System Boot Init ---\n"
 
-# Activate the Watchdog at 8 seconds
-wdt = machine.WDT(out=8000)
+# Activate the Watchdog at 10 seconds
+wdt = machine.WDT(out=10000)
 
 # Global tracking variables
 last_sync_day = -1

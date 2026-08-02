@@ -15,7 +15,7 @@ TIMEZONE_OFFSET_HOURS = 2
 
 # --- STATIC IP CONFIGURATION ---
 # Format: (Static_IP, Subnet_Mask, Gateway_IP, DNS_Server)
-STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.254", "1.1.1.1")
+STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
 
 # --- HARDWARE CONFIGURATION ---
 ZONE_A_PINS = [18, 19]  # Map to your input pins

@@ -58,6 +58,37 @@ next_retry_time = 0
 
 # --- BASE SYSTEM UTILITIES ---
 
+def ntp_sync():
+    """Attempts to sync time with a primary server, falling back if needed."""
+    # List of reliable global NTP servers
+    ntp_servers = ["pool.ntp.org", "time.windows.com"]
+    
+    # Force a 3-second network timeout to stay safe from the 10-second watchdog
+    socket.setdefaulttimeout(3.0)
+    
+    try:
+        for server in ntp_servers:
+            try:
+                log(f"Trying NTP sync via {server}...")
+                
+                # Overwrite the ntptime internal target server host
+                ntptime.host = server  
+                ntptime.settime()
+                
+                log(f"Successfully synced via {server}!")
+                return True  # Exit early on first success!
+            except Exception as inner_error:
+                log(f"Server {server} failed: {inner_error}. Trying next fallback...")
+                continue  # Loop proceeds to the next server
+                
+        # If the code reaches here, all servers in the list failed
+        raise RuntimeError("All configured NTP servers failed.")
+        
+    finally:
+        # Crucial safety: Always revert the socket back to non-blocking/normal 
+        # before exiting this function, even if errors occurred
+        socket.setdefaulttimeout(None)
+
 def log(text):
     """Outputs text to both the USB console and the internal web log array."""
     global system_logs
@@ -145,17 +176,12 @@ async def connect_and_sync():
 
     # Sync with Internet time server
     while True:
-        try:
-            wdt.feed()
-            socket.setdefaulttimeout(3.0)
-            ntptime.settime()
-            socket.setdefaulttimeout(None)
+        if ntp_sync():
             t = get_local_time()
             log("NTP Time Synchronised: {:02d}:{:02d}".format(t[3], t[4]))
             return True
-        except:
-            socket.setdefaulttimeout(None)
-            log("NTP handshake failed. Retrying in 10s...")
+        else:
+            log("Initial NTP sync failed. Retrying in 10s...")
             for _ in range(10):
                 await asyncio.sleep(1)
                 wdt.feed()
@@ -220,19 +246,15 @@ async def scheduler_task():
         # Re-verify NTP drift sync daily at midnight
         if current_day != last_sync_day and hr >= 0:
             if time.ticks_diff(now_ticks, next_retry_time) >= 0:
-                try:
-                    socket.setdefaulttimeout(3.0)
-                    ntptime.settime()
-                    socket.setdefaulttimeout(None)
-                    log("Daily Midnight Time Drift Sync Completed.")
-                    # Success: Lock it in for the day
+                if ntp_sync():
+                    # Success: Mark today as done
                     last_sync_day = get_local_time()[2]
-                except:
-                    socket.setdefaulttimeout(None)
-                    log("Midnight NTP adjustment failed; skipping.")
-                    # Failure: Schedule next attempt in 5 minutes (300,000 ms)
+                    log("Daily Midnight Time Drift Sync Completed.")
+                else:
+                    # Total failure: Schedule a 5-minute cooldown before retrying the list
+                    log("Midnight NTP sync failed. Postponing for 5 minutes.")
                     next_retry_time = time.ticks_add(now_ticks, 300000)
-
+ 
         # Non-blocking interval between current time checks
         await asyncio.sleep(5)
 

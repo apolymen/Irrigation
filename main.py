@@ -420,7 +420,7 @@ try:
 except KeyboardInterrupt:
     print("Forced termination. Clearing execution blocks.")
 finally:
-    for pin_num in ZONE_A_PINS:
-        valves_a.append(machine.Pin(pin_num, machine.Pin.OUT, value=0))
-    for pin_num in ZONE_B_PINS:
-        valves_b.append(machine.Pin(pin_num, machine.Pin.OUT, value=0))
+    for valve_pin in valves_a:
+        valve_pin.value(0)
+    for valve_pin in valves_b:
+        valve_pin.value(0)

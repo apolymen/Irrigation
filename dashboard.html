@@ -26,7 +26,7 @@
         <div class="flex-grid">
             <div class="zone-card">
                 <h2>{{NAME_A}}</h2>
-                <form action="/update" method="GET">
+                <form action="/update" method="POST">
                     <input type="hidden" name="zone" value="zone_a">
                     <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_A}}"></label><br>
                     <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_A}}"></label><br>
@@ -35,13 +35,19 @@
                     <h3>Schedule 2</h3>
                     <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_A}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_A}}> Enabled</label><br><br><br>
                     <button type="submit" class="btn">Save</button>
-                    <a href="/manual?zone=zone_a" class="btn manual-btn">Manual Start</a>
-                    <a href="/stop?zone=zone_a" class="btn manual-btn">Stop</a>
+                </form>
+                <form action="/manual" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <button type="submit" class="btn manual-btn">Manual Start</button>
+                </form>
+                <form action="/stop" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <button type="submit" class="btn manual-btn">Stop</button>
                 </form>
             </div>
             <div class="zone-card">
                 <h2>{{NAME_B}}</h2>
-                <form action="/update" method="GET">
+                <form action="/update" method="POST">
                     <input type="hidden" name="zone" value="zone_b">
                     <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_B}}"></label><br>
                     <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_B}}"></label><br>
@@ -50,8 +56,14 @@
                     <h3>Schedule 2</h3>
                     <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_B}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_B}}> Enabled</label><br><br><br>
                     <button type="submit" class="btn">Save</button>
-                    <a href="/manual?zone=zone_b" class="btn manual-btn">Manual Start</a>
-                    <a href="/stop?zone=zone_b" class="btn manual-btn">Stop</a>
+                </form>
+                <form action="/manual" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <button type="submit" class="btn manual-btn">Manual Start</button>
+                </form>
+                <form action="/stop" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <button type="submit" class="btn manual-btn">Stop</button>
                 </form>
             </div>
         </div>

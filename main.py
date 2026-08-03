@@ -307,13 +307,12 @@ def generate_html_page():
 
     return html
 
-def parse_url_params(path):
-    """Utility helper to isolate parameters passed from browser form queries."""
+def parse_form_params(text):
+    """Utility helper to isolate key=value&key=value pairs from a POST body."""
     params = {}
-    if "?" not in path: return params
+    if not text: return params
     try:
-        query_str = path.split("?")[1]
-        pairs = query_str.split("&")
+        pairs = text.split("&")
         for pair in pairs:
             if "=" in pair:
                 parts = pair.split("=")
@@ -328,18 +327,27 @@ async def handle_client(reader, writer):
         request_line = await reader.readline()
         request = request_line.decode("utf-8")
 
-        # Read past remaining HTTP header streams to clear buffer channels
+        # Read headers, capturing Content-Length so we know how much body to read
+        content_length = 0
         while True:
             line = await reader.readline()
             if line == b"\r\n" or line == b"": break
+            if line.lower().startswith(b"content-length:"):
+                content_length = int(line.split(b":", 1)[1].strip())
+
+        body = b""
+        if content_length:
+            body = await reader.readexactly(content_length)
+        body_text = body.decode("utf-8")
 
         parts = request.split(" ")
         if len(parts) < 2: return
+        method = parts[0]
         path = parts[1]
 
         # PARAMETER FORM UPDATES HANDLER
-        if path.startswith("/update"):
-            p = parse_url_params(path)
+        if method == "POST" and path.startswith("/update"):
+            p = parse_form_params(body_text)
             zk = p.get("zone")
             if zk in CONFIG:
                 CONFIG[zk]["duration_min"] = int(p.get("duration", 10))
@@ -357,8 +365,8 @@ async def handle_client(reader, writer):
             await writer.drain()
 
         # INSTANT MANUAL RUN OVERRIDE HANDLER
-        elif path.startswith("/manual"):
-            p = parse_url_params(path)
+        elif method == "POST" and path.startswith("/manual"):
+            p = parse_form_params(body_text)
             zk = p.get("zone")
             if zk in CONFIG:
                 if zone_busy.get(zk):
@@ -370,8 +378,8 @@ async def handle_client(reader, writer):
             await writer.drain()
 
         # Stop button handler
-        elif path.startswith("/stop"):
-            p = parse_url_params(path)
+        elif method == "POST" and path.startswith("/stop"):
+            p = parse_form_params(body_text)
             zk = p.get("zone")
             if zk in CONFIG:
                 task = zone_tasks.get(zk)

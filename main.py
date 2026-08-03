@@ -55,7 +55,7 @@ system_logs = "--- System Boot Init ---\n"
 wdt = machine.WDT(out=10000)
 
 # Global tracking variables
-last_sync_day = get_local_time()[2]
+last_sync_day = 0
 next_retry_time = 0
 
 # --- BASE SYSTEM UTILITIES ---
@@ -398,11 +398,13 @@ async def handle_client(reader, writer):
 
 # --- MAIN SYSTEM INITIALIZATION ROUTINE ---
 async def main():
+    global last_sync_day
     log("Booting system, initial setup...")
     # 1. Load any already saved schedules
     load_config()
     # 2. Block operations until network link established
     await connect_and_sync()
+    last_sync_day = get_local_time()[2]
     # 3. Kick off parallel network listener and time scheduler tasks
     asyncio.create_task(scheduler_task())
     log("Starting asynchronous web server on Port 80...")

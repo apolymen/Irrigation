@@ -418,9 +418,10 @@ async def main():
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("Forced termination. Clearing execution blocks.")
+    print("Stopped by user")
 finally:
     for valve_pin in valves_a:
         valve_pin.value(0)
     for valve_pin in valves_b:
         valve_pin.value(0)
+    print("Valves forced off")
